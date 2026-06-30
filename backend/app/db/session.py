@@ -5,17 +5,8 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DATABASE_ECHO,
-    pool_pre_ping=True,
-)
-
-async_session_maker = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+engine = None
+async_session_maker = None
 
 
 class Base(DeclarativeBase):
@@ -23,6 +14,20 @@ class Base(DeclarativeBase):
 
 
 async def get_db() -> AsyncSession:
+    global engine, async_session_maker
+
+    if async_session_maker is None:
+        engine = create_async_engine(
+            settings.DATABASE_URL,
+            echo=settings.DATABASE_ECHO,
+            pool_pre_ping=True,
+        )
+        async_session_maker = async_sessionmaker(
+            engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
+
     async with async_session_maker() as session:
         try:
             yield session
@@ -32,5 +37,10 @@ async def get_db() -> AsyncSession:
 
 async def init_db():
     from app.models.processing_log import ProcessingLog, EntityDetectionLog
+    global engine
+
+    if engine is None:
+        await anext(get_db())
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

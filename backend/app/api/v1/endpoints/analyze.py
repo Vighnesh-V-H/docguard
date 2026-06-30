@@ -8,6 +8,7 @@ from app.schemas.analyze import (
 from app.services.nlp import NLPService
 from app.services.audit import AuditService
 from app.db.session import get_db
+from app.utils.extractors.document import extract_text_from_upload
 
 
 router = APIRouter()
@@ -117,13 +118,14 @@ async def analyze_file(
     audit_service: AuditService = Depends(get_audit_service),
 ):
     start_time = time.perf_counter()
-    
-    if file.content_type not in ["application/pdf", "text/plain", "message/rfc822"]:
+
+    upload_document_type = detect_upload_document_type(file.content_type, file.filename)
+    if upload_document_type == DocumentType.UNKNOWN:
         raise HTTPException(status_code=400, detail="Unsupported file type")
-    
+
     content = await file.read()
-    text = content.decode("utf-8", errors="ignore")
-    
+    text, upload_document_type, _ = extract_text_from_upload(content, file.content_type, file.filename)
+
     try:
         entities = await nlp_service.analyze(
             text=text,
@@ -135,8 +137,9 @@ async def analyze_file(
     
     processing_time_ms = (time.perf_counter() - start_time) * 1000
     risk_level = calculate_risk_level(entities)
-    document_type = detect_document_type(text)
-    
+
+    document_type = upload_document_type if upload_document_type != DocumentType.UNKNOWN else detect_document_type(text)
+
     await audit_service.log_analysis(
         document_type=document_type.value,
         risk_level=risk_level,

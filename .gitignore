@@ -85,3 +85,4 @@ config/secrets.yaml
 tmp/
 temp/
 *.tmp
+report.md

@@ -139,6 +139,6 @@ class AuditRepository:
         
         result = await self.db.execute(query)
         return [
-            {"date": row.date.isoformat(), "count": row.count}
+            {"date": str(row.date), "count": row.count}
             for row in result.all()
         ]

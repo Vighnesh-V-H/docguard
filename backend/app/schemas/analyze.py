@@ -80,6 +80,7 @@ class RedactResponse(BaseModel):
     processing_time_ms: float
     document_length: int
     document_type: DocumentType = DocumentType.UNKNOWN
+    entities_redacted: int = 0
 
 
 class HealthResponse(BaseModel):

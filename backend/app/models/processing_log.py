@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import DateTime, func, Enum as SQLEnum, Integer, Float, String, JSON
+from sqlalchemy import DateTime, func, Enum as SQLEnum, Integer, Float, String, JSON, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from enum import Enum as PyEnum
 
@@ -46,6 +46,8 @@ class EntityDetectionLog(Base):
     __tablename__ = "entity_detection_logs"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    processing_log_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    processing_log_id: Mapped[int] = mapped_column(
+        ForeignKey("processing_logs.id"), nullable=False, index=True
+    )
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     entity_count: Mapped[int] = mapped_column(Integer, default=0)

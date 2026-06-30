@@ -1,7 +1,11 @@
 import logging
 import sys
-from pythonjsonlogger import jsonlogger
 from app.core.config import get_settings
+
+try:
+    from pythonjsonlogger import jsonlogger
+except ImportError:
+    jsonlogger = None
 
 
 settings = get_settings()
@@ -10,7 +14,7 @@ settings = get_settings()
 def setup_logging() -> None:
     log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
     
-    if settings.LOG_FORMAT == "json":
+    if settings.LOG_FORMAT == "json" and jsonlogger is not None:
         formatter = jsonlogger.JsonFormatter(
             "%(asctime)s %(name)s %(levelname)s %(message)s",
             timestamp=True,
